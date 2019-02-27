@@ -9,8 +9,7 @@ from threading import Thread
 import waitress
 from flask import Flask, request
 
-from adapters.bbcodeadapter import BBCodeAdapter
-from adapters.markdownadapter import MarkdownAdapter
+from adapters.tagadapter import TagAdapter
 from adathermal import ThermalPrinter
 
 app = Flask(__name__)
@@ -29,7 +28,7 @@ class PrintTask:
 @app.route("/print", methods=["POST"])
 def add_print_task():
     format_type = request.json.get("format", "plain")
-    if format_type not in ["plain", "bbcode", "markdown"]:
+    if format_type not in ["plain", "tag"]:
         return "Bad format", HTTPStatus.BAD_REQUEST
     body = request.json["body"]
     print_queue.put(PrintTask(format_type, body))
@@ -45,8 +44,7 @@ def create_printer(args):
 
 def print_loop(args):
     printer = create_printer(args)
-    bbcode_adapter = BBCodeAdapter(printer)
-    markdown_adapter = MarkdownAdapter(printer)
+    tag_adapter = TagAdapter(printer)
 
     while True:
         try:
@@ -62,10 +60,8 @@ def print_loop(args):
             task = print_queue.get()
             if task is stop_sentinel:
                 break
-            if task.format_type == "bbcode":
-                bbcode_adapter.print(task.body)
-            elif task.format_type == "markdown":
-                markdown_adapter.print(task.body)
+            if task.format_type == "tag":
+                tag_adapter.print(task.body)
             else:
                 printer.print(task.body)
             printer.print("\n" * 3)

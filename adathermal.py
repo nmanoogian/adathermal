@@ -364,7 +364,7 @@ class ThermalPrinter(Serial):
         self.print_mode = 0
         self.write_print_mode()
 
-    def inverseOn(self):
+    def inverse_on(self):
         if self.firmware_version >= 268:
             self.write_bytes(29, 66, 1)
         else:
