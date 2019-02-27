@@ -68,6 +68,7 @@ def print_loop(args):
                 markdown_adapter.print(task.body)
             else:
                 printer.print(task.body)
+            printer.print("\n" * 3)
             print_queue.task_done()
         except IOError as e:
             print("Failed to print task: {}".format(e))
