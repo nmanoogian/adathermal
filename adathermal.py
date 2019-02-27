@@ -690,9 +690,3 @@ class ThermalPrinter(Serial):
     def print(self, *args):
         for arg in args:
             self.write(str(arg))
-
-    # For Arduino code compatibility again
-    def println(self, *args):
-        for arg in args:
-            self.write(str(arg))
-        self.write('\n')

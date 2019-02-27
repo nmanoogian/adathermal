@@ -1,13 +1,15 @@
 #!/usr/bin/python
 
 import argparse
-import re
 import time
 from queue import Queue
 from threading import Thread
+from http import HTTPStatus
 
 import waitress
 from flask import Flask, request
+from adapters.bbcodeadapter import  BBCodeAdapter
+from adapters.markdownadapter import  MarkdownAdapter
 
 from adathermal import ThermalPrinter
 
@@ -18,10 +20,19 @@ print_queue = Queue()
 stop_sentinel = object()
 
 
+class PrintTask:
+    def __init__(self, format_type, body):
+        self.format_type = format_type
+        self.body = body
+
+
 @app.route("/print", methods=["POST"])
 def add_print_task():
+    format_type = request.json["format"]
+    if format_type not in ["bbcode", "markdown"]:
+        return "Bad format", HTTPStatus.BAD_REQUEST
     body = request.json["body"]
-    print_queue.put(body)
+    print_queue.put(PrintTask(format_type, body))
     return "OK"
 
 
@@ -34,6 +45,8 @@ def create_printer(args):
 
 def print_loop(args):
     printer = create_printer(args)
+    bbcode_adapter = BBCodeAdapter(printer)
+    markdown_adapter = MarkdownAdapter(printer)
 
     while True:
         try:
@@ -49,22 +62,10 @@ def print_loop(args):
             task = print_queue.get()
             if task is stop_sentinel:
                 break
-            for line in task.splitlines():
-                header_match = re.match(r"(?P<hashes>#{1,2})\s*(?P<text>.*)", line)
-                bold_match = re.match(r"\*(?P<text>.*)\*$", line)
-                if header_match is not None:
-                    if len(header_match.group("hashes")) == 1:
-                        printer.set_size("L")
-                    else:
-                        printer.set_size("M")
-                    printer.println(header_match.group("text").encode("ascii", "ignore"))
-                    printer.set_size("S")
-                elif bold_match is not None:
-                    printer.bold_on()
-                    printer.println(bold_match.group("text").encode("ascii", "ignore"))
-                    printer.bold_off()
-                else:
-                    printer.println(line.encode("ascii", "ignore"))
+            if task.format_type == "bbcode":
+                bbcode_adapter.print(task.body)
+            elif task.format_type == "markdown":
+                markdown_adapter.print(task.body)
             print_queue.task_done()
         except IOError as e:
             print("Failed to print task: {}".format(e))
@@ -76,7 +77,7 @@ def main():
     args = parser.parse_args()
 
     Thread(target=print_loop, args=(args,)).start()
-    waitress.serve(app)
+    waitress.serve(app, port=8081)
     print_queue.put(stop_sentinel)
 
 
