@@ -149,9 +149,9 @@ class ThermalPrinter(Serial):
             for arg in args:
                 sys.stdout.write(str(arg))
         else:
+            self.timeout_wait()
+            self.timeout_set(len(args) * self.byte_time)
             for arg in args:
-                self.timeout_wait()
-                self.timeout_set(self.byte_time)
                 super(ThermalPrinter, self).write(bytes([arg]))
 
     # Override write() method to keep track of paper feed.
