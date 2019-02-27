@@ -28,8 +28,8 @@ class PrintTask:
 
 @app.route("/print", methods=["POST"])
 def add_print_task():
-    format_type = request.json["format"]
-    if format_type not in ["bbcode", "markdown"]:
+    format_type = request.json.get("format", "plain")
+    if format_type not in ["plain", "bbcode", "markdown"]:
         return "Bad format", HTTPStatus.BAD_REQUEST
     body = request.json["body"]
     print_queue.put(PrintTask(format_type, body))
@@ -66,6 +66,8 @@ def print_loop(args):
                 bbcode_adapter.print(task.body)
             elif task.format_type == "markdown":
                 markdown_adapter.print(task.body)
+            else:
+                printer.print(task.body)
             print_queue.task_done()
         except IOError as e:
             print("Failed to print task: {}".format(e))
