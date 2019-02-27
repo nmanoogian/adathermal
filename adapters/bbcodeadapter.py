@@ -3,7 +3,7 @@ import bbcode
 
 class BBCodeTag:
 
-    def __init__(self, name, description, on_open=None, on_close=None):
+    def __init__(self, name, description, on_open, on_close):
         self.name = name
         self.description = description
         self.on_open = on_open
@@ -23,6 +23,18 @@ class BBCodeAdapter:
             description="Large-sized text",
             on_open=lambda p: p.set_size("L"),
             on_close=lambda p: p.set_size("S"),
+        ),
+        BBCodeTag(
+            name="b",
+            description="Bold text",
+            on_open=lambda p: p.bold_on(),
+            on_close=lambda p: p.bold_off(),
+        ),
+        BBCodeTag(
+            name="s",
+            description="Strike-through text",
+            on_open=lambda p: p.strike_on(),
+            on_close=lambda p: p.strike_off(),
         ),
     ]
 
