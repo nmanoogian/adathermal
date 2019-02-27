@@ -1,6 +1,8 @@
-from serial import Serial
-import time
+import math
 import sys
+import time
+
+from serial import Serial
 
 
 class ThermalPrinter(Serial):
@@ -145,23 +147,23 @@ class ThermalPrinter(Serial):
     def write_bytes(self, *args):
         if self.write_to_stdout:
             for arg in args:
-                sys.stdout.write(chr(arg))
+                sys.stdout.write(str(arg))
         else:
-            self.timeout_wait()
-            self.timeout_set(len(args) * self.byte_time)
             for arg in args:
-                super(ThermalPrinter, self).write(chr(arg))
+                self.timeout_wait()
+                self.timeout_set(self.byte_time)
+                super(ThermalPrinter, self).write(bytes([arg]))
 
     # Override write() method to keep track of paper feed.
     def write(self, data):
         for i in range(len(data)):
             c = data[i]
             if self.write_to_stdout:
-                sys.stdout.write(c)
+                sys.stdout.write(str(c))
                 continue
-            if c != 0x13:
+            if ord(c) != 0x13:
                 self.timeout_wait()
-                super(ThermalPrinter, self).write(c)
+                super(ThermalPrinter, self).write(c.encode('cp437', 'ignore'))
                 d = self.byte_time
                 if ((c == '\n') or
                         (self.column == self.max_column)):
@@ -306,20 +308,20 @@ class ThermalPrinter(Serial):
             n = len(text)
             if n > 255: n = 255
             if self.write_to_stdout:
-                sys.stdout.write(chr(n))
+                sys.stdout.write(str(n))
                 for i in range(n):
-                    sys.stdout.write(text[i])
+                    sys.stdout.write(str(text[i]))
             else:
-                super(ThermalPrinter, self).write(chr(n))
+                super(ThermalPrinter, self).write(n)
                 for i in range(n):
                     super(ThermalPrinter,
                           self).write(text[i])
         else:
             # Older firmware: write string + NUL
             if self.write_to_stdout:
-                sys.stdout.write(text)
+                sys.stdout.write(str(text))
             else:
-                super(ThermalPrinter, self).write(text)
+                super(ThermalPrinter, self).write(text.encode("utf-8", "ignore"))
         self.prev_byte = '\n'
 
     # === Character commands ===
@@ -470,7 +472,7 @@ class ThermalPrinter(Serial):
         self.write_bytes(27, 45, 0)
 
     def print_bitmap(self, w, h, bitmap, laa_t=False):
-        row_bytes = (w + 7) / 8  # Round up to next byte boundary
+        row_bytes = math.floor((w + 7) / 8)  # Round up to next byte boundary
         if row_bytes >= 48:
             row_bytes_clipped = 48  # 384 pixels max width
         else:
@@ -499,11 +501,10 @@ class ThermalPrinter(Serial):
             for y in range(chunk_height):
                 for x in range(row_bytes_clipped):
                     if self.write_to_stdout:
-                        sys.stdout.write(
-                            chr(bitmap[i]))
+                        sys.stdout.write(str(bitmap[i]))
                     else:
                         super(ThermalPrinter,
-                              self).write(chr(bitmap[i]))
+                              self).write(bytes([bitmap[i]]))
                     i += 1
                 i += row_bytes - row_bytes_clipped
             self.timeout_set(chunk_height * self.dot_print_time)
