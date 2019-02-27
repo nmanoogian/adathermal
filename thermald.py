@@ -2,15 +2,15 @@
 
 import argparse
 import time
+from http import HTTPStatus
 from queue import Queue
 from threading import Thread
-from http import HTTPStatus
 
 import waitress
 from flask import Flask, request
-from adapters.bbcodeadapter import  BBCodeAdapter
-from adapters.markdownadapter import  MarkdownAdapter
 
+from adapters.bbcodeadapter import BBCodeAdapter
+from adapters.markdownadapter import MarkdownAdapter
 from adathermal import ThermalPrinter
 
 app = Flask(__name__)
