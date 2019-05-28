@@ -76,7 +76,7 @@ def main():
     args = parser.parse_args()
 
     Thread(target=print_loop, args=(args,)).start()
-    waitress.serve(app, port=8081)
+    waitress.serve(app, port=8080)
     print_queue.put(stop_sentinel)
 
 
