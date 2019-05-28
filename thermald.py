@@ -27,7 +27,7 @@ class PrintTask:
 
 @app.route("/print", methods=["POST"])
 def add_print_task():
-    format_type = request.json.get("format", "plain")
+    format_type = request.json.get("format", "tag")
     if format_type not in ["plain", "tag"]:
         return "Bad format", HTTPStatus.BAD_REQUEST
     body = request.json["body"]
