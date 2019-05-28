@@ -2,35 +2,35 @@ import re
 
 
 class Tag:
-    def __init__(self, name, description, on_open, on_close):
-        self.name = name
+    def __init__(self, pattern, description, on_open, on_close):
+        self.pattern = pattern
         self.description = description
         self.on_open = on_open
         self.on_close = on_close
 
 
 class TagAdapter:
-    tags = [
+    md_tags = [
         Tag(
-            name="m",
+            pattern=re.compile(r"##\s*(?P<body>.*)"),
             description="Medium-sized text",
             on_open=lambda p: p.set_size("M"),
             on_close=lambda p: p.set_size("S"),
         ),
         Tag(
-            name="l",
+            pattern=re.compile(r"#\s*(?P<body>.*)"),
             description="Large-sized text",
             on_open=lambda p: p.set_size("L"),
             on_close=lambda p: p.set_size("S"),
         ),
         Tag(
-            name="b",
+            pattern=re.compile(r"\*\s*(?P<body>.*)"),
             description="Bold text",
             on_open=lambda p: p.bold_on(),
             on_close=lambda p: p.bold_off(),
         ),
         Tag(
-            name="i",
+            pattern=re.compile(r"~\s*(?P<body>.*?)~"),
             description="Inverse text",
             on_open=lambda p: p.inverse_on(),
             on_close=lambda p: p.inverse_off(),
@@ -43,8 +43,8 @@ class TagAdapter:
     @staticmethod
     def tag_match(line):
         matches = (
-            (tag, re.match(r"\[{}\]\s*(?P<body>.*)".format(tag.name), line))
-            for tag in TagAdapter.tags
+            (tag, tag.pattern.match(line))
+            for tag in TagAdapter.md_tags
         )
         return next(((tag, match) for (tag, match) in matches if match is not None), None)
 
