@@ -526,7 +526,7 @@ class ThermalPrinter(Serial):
         height = image.size[1]
         if width > 384:
             width = 384
-        row_bytes = (width + 7) / 8
+        row_bytes = (width + 7) // 8
         bitmap = bytearray(row_bytes * height)
         pixels = image.load()
 
