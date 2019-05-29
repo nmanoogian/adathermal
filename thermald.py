@@ -4,10 +4,12 @@ import argparse
 import os
 import time
 from http import HTTPStatus
+from io import BytesIO
 from queue import Queue
 from threading import Thread
 from uuid import uuid4
 
+import requests
 import waitress
 from PIL import Image
 from flask import Flask, request
@@ -44,7 +46,15 @@ def add_image_print_task():
         return "Missing `file`", HTTPStatus.BAD_REQUEST
     path = "/tmp/{}".format(uuid4())
     request.files['file'].save(path)
-    print_queue.put(PrintTask("image", path))
+    print_queue.put(PrintTask("image-file", path))
+    return "OK"
+
+
+@app.route("/print-image-url", methods=["POST"])
+def add_image_print_url_task():
+    image_url = request.json.get("url")
+    image_data = requests.get(image_url).content
+    print_queue.put(PrintTask("image-data", BytesIO(image_data)))
     return "OK"
 
 
@@ -75,9 +85,11 @@ def print_loop(args):
                 break
             if task.format_type == "tag":
                 tag_adapter.print(task.body)
-            elif task.format_type == "image":
+            elif task.format_type == "image-file":
                 printer.print_image(Image.open(task.body))
                 os.remove(task.body)
+            elif task.format_type == "image-data":
+                printer.print_image(Image.open(task.body))
             else:
                 printer.print(task.body)
             printer.print("\n" * 3)
