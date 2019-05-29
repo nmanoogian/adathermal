@@ -1,12 +1,15 @@
 #!/usr/bin/python
 
 import argparse
+import os
 import time
 from http import HTTPStatus
 from queue import Queue
 from threading import Thread
+from uuid import uuid4
 
 import waitress
+from PIL import Image
 from flask import Flask, request
 
 from adapters.tagadapter import TagAdapter
@@ -32,6 +35,16 @@ def add_print_task():
         return "Bad format", HTTPStatus.BAD_REQUEST
     body = request.json["body"]
     print_queue.put(PrintTask(format_type, body))
+    return "OK"
+
+
+@app.route("/print-image", methods=["POST"])
+def add_image_print_task():
+    if 'file' not in request.files:
+        return "Missing `file`", HTTPStatus.BAD_REQUEST
+    path = "/tmp/{}".format(uuid4())
+    request.files['file'].save(path)
+    print_queue.put(PrintTask("image", path))
     return "OK"
 
 
@@ -62,6 +75,9 @@ def print_loop(args):
                 break
             if task.format_type == "tag":
                 tag_adapter.print(task.body)
+            elif task.format_type == "image":
+                printer.print_image(Image.open(task.body))
+                os.remove(task.body)
             else:
                 printer.print(task.body)
             printer.print("\n" * 3)
