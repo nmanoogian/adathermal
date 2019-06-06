@@ -2,6 +2,7 @@ import math
 import sys
 import time
 
+from PIL import Image
 from serial import Serial
 
 
@@ -522,13 +523,16 @@ class ThermalPrinter(Serial):
         if image.mode != '1':
             image = image.convert('1')
 
+        if image.size[0] > image.size[1]:
+            image = image.transpose(Image.ROTATE_270)
+
         width = image.size[0]
         height = image.size[1]
-        if width > 384:
-            aspect = height / width
-            width = 384
-            height = math.floor(width * aspect)
-            image = image.resize((width, height))
+
+        aspect = height / width
+        width = 384
+        height = math.floor(width * aspect)
+        image = image.resize((width, height))
 
         row_bytes = (width + 7) // 8
         bitmap = bytearray(row_bytes * height)
