@@ -13,11 +13,14 @@ import requests
 import waitress
 from PIL import Image
 from flask import Flask, request
+from flask_cors import CORS
 
 from adapters.tagadapter import TagAdapter
 from adathermal import ThermalPrinter
 
 app = Flask(__name__)
+
+CORS(app)
 
 print_queue = Queue()
 
