@@ -3,6 +3,7 @@
 import argparse
 import os
 import time
+from functools import wraps
 from http import HTTPStatus
 from io import BytesIO
 from queue import Queue
@@ -31,6 +32,19 @@ class PrintTask:
     def __init__(self, format_type, body):
         self.format_type = format_type
         self.body = body
+
+
+def requires_auth():
+    def wrapper(f):
+        @wraps(f)
+        def wrapped(*wargs, **kwargs):
+            if request.headers.get("X-API-KEY") != os.environ.get("API_KEY"):
+                return "You are not authorized to perform this action", HTTPStatus.UNAUTHORIZED
+            return f(*wargs, **kwargs)
+
+        return wrapped
+
+    return wrapper
 
 
 @app.route("/", methods=["GET"])
