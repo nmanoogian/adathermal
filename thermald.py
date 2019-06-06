@@ -30,6 +30,11 @@ class PrintTask:
         self.body = body
 
 
+@app.route("/", methods=["GET"])
+def index():
+    return ""
+
+
 @app.route("/print", methods=["POST"])
 def add_print_task():
     format_type = request.json.get("format", "tag")
