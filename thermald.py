@@ -48,11 +48,13 @@ def requires_auth():
 
 
 @app.route("/", methods=["GET"])
+@requires_auth()
 def index():
     return ""
 
 
 @app.route("/print", methods=["POST"])
+@requires_auth()
 def add_print_task():
     format_type = request.json.get("format", "tag")
     if format_type not in ["plain", "tag"]:
@@ -63,6 +65,7 @@ def add_print_task():
 
 
 @app.route("/print-image", methods=["POST"])
+@requires_auth()
 def add_image_print_task():
     if 'file' not in request.files:
         return "Missing `file`", HTTPStatus.BAD_REQUEST
@@ -73,6 +76,7 @@ def add_image_print_task():
 
 
 @app.route("/print-image-url", methods=["POST"])
+@requires_auth()
 def add_image_print_url_task():
     image_url = request.json.get("url")
     image_data = requests.get(image_url).content
